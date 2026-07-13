@@ -7,6 +7,7 @@ from flask import session
 
 app=Flask(__name__)
 app.secret_key="abc123"
+patients=[{"doctor_name":"Ram","patient_name":"arjun","age":17},{"doctor_name":"Ragul","patient_name":"gokul","age":19}]
 @app.route("/")
 def home():
     return render_template("home.html")
@@ -26,7 +27,7 @@ def doctor_login():
 @app.route("/doctor_dashboard")
 def doctor_dashboard():
     if "doctor" in session:
-        return render_template("doctor_dashboard.html",username=session["doctor"])
+        return render_template("doctor_dashboard.html",username=session["doctor"],patients=patients)
     else:
         return redirect(url_for("doctor_login"))
 @app.route("/logout")
