@@ -16,6 +16,15 @@
     <label for="password" class="text-center mb-3 ">PASSWORD : </label>
     <input type="password" id="password" name="doctor_password" placeholder="Enter password" class="text-center mt-5 mb-3 form-control" required>
     <button type="submit" class="btn btn-primary">LOGIN</button>
+    {% with message=get_flashed_messages() %}
+    {% if message %}
+    {% for message in message %}
+    <div class="alert alert-danger mt-3">
+    {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
     </form>
     </div>
     </body>

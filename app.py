@@ -4,6 +4,7 @@ from flask import request
 from flask import redirect
 from flask import url_for
 from flask import session
+from flask import flash
 
 app=Flask(__name__)
 app.secret_key="abc123"
@@ -21,7 +22,8 @@ def doctor_login():
             session["doctor"]=username
             return redirect(url_for("doctor_dashboard"))
         else:
-            return "Incorrect Credentials"
+            flash("INCORRECT CREDENTIALS")
+            return redirect(url_for("doctor_login"))
     else:
         return render_template("doctor_login.html")
 @app.route("/doctor_dashboard")
