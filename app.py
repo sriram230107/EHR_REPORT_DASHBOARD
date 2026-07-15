@@ -5,10 +5,11 @@ from flask import redirect
 from flask import url_for
 from flask import session
 from flask import flash
+import sqlite3 as sq
+
 
 app=Flask(__name__)
 app.secret_key="abc123"
-patients=[{"doctor_name":"Ram","patient_name":"arjun","age":17},{"doctor_name":"Ragul","patient_name":"gokul","age":19}]
 @app.route("/")
 def home():
     return render_template("home.html")
@@ -28,6 +29,12 @@ def doctor_login():
         return render_template("doctor_login.html")
 @app.route("/doctor_dashboard")
 def doctor_dashboard():
+    conn=sq.connect("ehr.db")
+    cursor=conn.cursor()
+    conn.row_factory = sq.Row
+    cursor.execute("SELECT*FROM patients")
+    patients=cursor.fetchall()
+    conn.close()
     if "doctor" in session:
         return render_template("doctor_dashboard.html",username=session["doctor"],patients=patients)
     else:
@@ -36,5 +43,53 @@ def doctor_dashboard():
 def logout():
     session.pop("doctor")
     return redirect(url_for("doctor_login"))
+@app.route("/add_patient",methods=['GET','POST'])
+def add_patient():
+    if request.method=="GET":
+        return render_template("add_patient.html")
+    else:
+        conn=sq.connect("ehr.db")
+        cursor=conn.cursor()
+
+        firstname=request.form["firstname"]
+        lastname=request.form["lastname"]
+        dob=request.form["dob"]
+        blood_group=request.form["blood_group"]
+        phone=request.form["phone"]
+        gender=request.form["gender"]
+        address=request.form["address"]
+        email=request.form["email"]
+
+        cursor.execute("""
+        INSERT INTO patients(
+        firstname,
+        lastname,
+        gender,
+        dob,
+        phone,
+        email,
+        address,
+        blood_group
+        )
+        VALUES(?,?,?,?,?,?,?,?)
+        """,
+        (
+        firstname,
+        lastname,
+        gender,
+        dob,
+        phone,
+        email,
+        address,
+        blood_group
+        ))
+        conn.commit()
+
+        conn.close()
+
+        return redirect(url_for("doctor_dashboard"))
+
+
+
 if __name__ =="__main__":
     app.run(debug=True)
