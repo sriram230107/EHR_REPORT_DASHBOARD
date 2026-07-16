@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sR
+        Il4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+
+        <h1 class="">PATIENT DETAILS. Bootstrap heading</h1>
+
+    </head>
+    <body>
+        <div class="container mb-5 mt-5">
+        <form action="/edit_patient/{{patient[0]}}" method="POST">
+            <label for="firstname" class="text-center mb-3">Enter Patient FirstName : </label>
+            <input type="text" id="firstname" name="firstname" value="{{patient[1]}}" class="text-center mt-5 mb-3 form-control" required>
+            <label for="lastname" class="text-center mb-3">Enter Patient LastName : </label>
+            <input type="text" id="lastname" name="lastname" value="{{patient[2]}}" class="text-center mt-5 mb-3 form-control" required>
+            <label for="dob" class="text-center mb-3">Enter Patient dob : </label>
+            <input type="text" id="dob" name="dob" value="{{patient[4]}}" class="text-center mt-5 mb-3 form-control" required>
+            <label for="blood_group" class="text-center mb-3">Enter Patient Blood Group : </label>
+            <input type="text" id="blood_group" name="blood_group" value="{{patient[8]}}" class="text-center mt-5 mb-3 form-control" required>
+            <label for="phone" class="text-center mb-3">Enter Patient phone.no: </label>
+            <input type="text" id="phone" name="phone" value="{{patient[5]}}" class="text-center mt-5 mb-3 form-control" required>
+            <label for="gender" class="text-center mb-3">Enter Patient gender : </label>
+            <input type="text" id="gender" name="gender" value="{{patient[3]}}" class="text-center mt-5 mb-3 form-control" required>
+            <label for="email" class="text-center mb-3">Enter patient email : </label>
+            <input type="text" id="email" name="email" class="text-center mt-5 mb-3 form-control" value="{{patient[6]}}" required>
+            <label for="address" class="text-center mb-3">Enter Patient address : </label>
+            <input type="text" id="address" name="address" value="{{patient[7]}}" class="text-center mt-5 mb-3 form-control" required>
+            <button type="submit" class="btn btn-primary">SUBMIT</button>
+        </form>
+        </div>
+    </body>
+
+</html>

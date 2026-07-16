@@ -31,7 +31,6 @@ def doctor_login():
 def doctor_dashboard():
     conn=sq.connect("ehr.db")
     cursor=conn.cursor()
-    conn.row_factory = sq.Row
     cursor.execute("SELECT*FROM patients")
     patients=cursor.fetchall()
     conn.close()
@@ -88,8 +87,214 @@ def add_patient():
         conn.close()
 
         return redirect(url_for("doctor_dashboard"))
+    
+
+@app.route("/search_patient", methods=["GET", "POST"])
+def search_patient():
+
+    if request.method == "GET":
+        return render_template("search_patient.html")
+
+    else:
+        patient_id = request.form["patient_id"]
+
+        conn = sq.connect("ehr.db")
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "SELECT * FROM patients WHERE patient_id = ?",
+            (patient_id,)
+        )
+
+        patient = cursor.fetchone()
+
+        conn.close()
+
+        if patient is None:
+            return "Patient not found"
+
+        return render_template(
+            "search_result.html",
+            patient=patient
+        )
+    
+@app.route("/edit_patient/<int:patient_id>", methods=["GET", "POST"])
+def edit_patient(patient_id):
+
+    conn = sq.connect("ehr.db")
+    cursor = conn.cursor()
+
+    if request.method == "GET":
+
+        cursor.execute(
+            "SELECT * FROM patients WHERE patient_id=?",
+            (patient_id,)
+        )
+
+        patient = cursor.fetchone()
+
+        conn.close()
+
+        if patient is None:
+            return "Patient not found"
+
+        return render_template(
+            "edit_patient.html",
+            patient=patient
+        )
 
 
+    if request.method == "POST":
+
+        firstname = request.form["firstname"]
+        lastname = request.form["lastname"]
+        gender = request.form["gender"]
+        dob = request.form["dob"]
+        phone = request.form["phone"]
+        email = request.form["email"]
+        address = request.form["address"]
+        blood_group = request.form["blood_group"]
+
+        cursor.execute(
+            """
+            UPDATE patients
+            SET firstname=?,
+                lastname=?,
+                gender=?,
+                dob=?,
+                phone=?,
+                email=?,
+                address=?,
+                blood_group=?
+            WHERE patient_id=?
+            """,
+            (
+                firstname,
+                lastname,
+                gender,
+                dob,
+                phone,
+                email,
+                address,
+                blood_group,
+                patient_id
+            )
+        )
+
+        conn.commit()
+        conn.close()
+
+        return redirect(url_for("doctor_dashboard"))
+
+@app.route("/delete_patient/<int:patient_id>")
+def delete_patient(patient_id):
+
+    conn = sq.connect("ehr.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "DELETE FROM patients WHERE patient_id=?",
+        (patient_id,)
+    )
+
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for("doctor_dashboard"))
+
+@app.route("/medical_history/<int:patient_id>")
+def medical_history(patient_id):
+
+    conn = sq.connect("ehr.db")
+    cursor = conn.cursor()
+
+
+    cursor.execute(
+        """
+        SELECT * FROM medical_records
+        WHERE patient_id=?
+        """,
+        (patient_id,)
+    )
+
+
+    records = cursor.fetchall()
+
+
+    cursor.execute(
+        """
+        SELECT * FROM patients
+        WHERE patient_id=?
+        """,
+        (patient_id,)
+    )
+
+
+    patient = cursor.fetchone()
+
+
+    conn.close()
+
+
+    return render_template(
+        "medical_history.html",
+        patient=patient,
+        records=records
+    )
+
+@app.route("/add_record/<int:patient_id>", methods=["GET", "POST"])
+def add_record(patient_id):
+
+    conn = sq.connect("ehr.db")
+    cursor = conn.cursor()
+
+
+    if request.method == "POST":
+
+        doctor_name = session["doctor"]
+        symptoms = request.form["symptoms"]
+        diagnosis = request.form["diagnosis"]
+        prescription = request.form["prescription"]
+        notes = request.form["notes"]
+
+
+        cursor.execute(
+            """
+            INSERT INTO medical_records
+            (patient_id, doctor_name, symptoms, diagnosis, prescription, notes)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                patient_id,
+                doctor_name,
+                symptoms,
+                diagnosis,
+                prescription,
+                notes
+            )
+        )
+
+
+        conn.commit()
+
+        conn.close()
+
+
+        return redirect(
+            url_for(
+                "medical_history",
+                patient_id=patient_id
+            )
+        )
+
+
+    conn.close()
+
+
+    return render_template(
+        "add_record.html",
+        patient_id=patient_id
+    )
 
 if __name__ =="__main__":
     app.run(debug=True)
