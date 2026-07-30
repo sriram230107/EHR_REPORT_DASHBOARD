@@ -332,6 +332,8 @@ def get_icd_code():
     symptoms = request.args.get("symptoms")
 
     matched_symptoms = 0
+    match_score = 0
+
     diagnosis_lower = diagnosis.lower().strip()
 
     icd_data = icd_codes.get(diagnosis_lower)
@@ -342,25 +344,31 @@ def get_icd_code():
 
         symptoms_lower = symptoms.lower()
 
-
-
         for symptom in symptom_list:
 
             if symptom in symptoms_lower:
                 matched_symptoms += 1
 
         if matched_symptoms > 0:
+
             icd_code = icd_data["code"]
+
+            total_symptoms = len(symptom_list)
+
+            match_score = (matched_symptoms / total_symptoms) * 100
+
         else:
+
             icd_code = None
 
     else:
+
         icd_code = None
 
     return {
         "icd_code": icd_code,
-        "matched_symptoms": matched_symptoms  
+        "matched_symptoms": matched_symptoms,
+        "match_score": round(match_score, 1)
     }
-
 if __name__ =="__main__":
     app.run(debug=True)

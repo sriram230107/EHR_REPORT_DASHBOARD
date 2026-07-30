@@ -131,7 +131,8 @@ diagnosisInput.addEventListener("input", function() {
         icdInput.value = data.icd_code;
 
         document.getElementById("matchInfo").textContent =
-            "Matched Symptoms: " + data.matched_symptoms;
+    "Matched Symptoms: " + data.matched_symptoms
+    + " | Match Score: " + data.match_score + "%";
 
     } else {
 
