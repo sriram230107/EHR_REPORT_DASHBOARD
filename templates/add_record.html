@@ -66,6 +66,7 @@ required>
     </small>
 
     <div id="matchInfo" class="text-muted mt-2"></div>
+    <div id="suggestionsList" class="mt-3"></div>
 
 </div>
 
@@ -109,6 +110,7 @@ const diagnosisInput = document.querySelector('input[name="diagnosis"]');
 const symptomsInput = document.querySelector('textarea[name="symptoms"]');
 const icdInput = document.querySelector('input[name="icd_code"]');
 const matchInfo = document.getElementById("matchInfo");
+const suggestionsList = document.getElementById("suggestionsList");
 
 
 function getICDCode() {
@@ -116,11 +118,15 @@ function getICDCode() {
     const diagnosis = diagnosisInput.value.trim();
     const symptoms = symptomsInput.value.trim();
 
-    if (diagnosis === "") {
+    if (diagnosis === "" && symptoms === "") {
+
         icdInput.value = "";
         matchInfo.textContent = "";
+        suggestionsList.innerHTML = "";
+
         return;
     }
+
 
     fetch(
         "/get_icd_code?diagnosis="
@@ -133,16 +139,104 @@ function getICDCode() {
 
     .then(data => {
 
-        if (data.icd_code) {
+        suggestionsList.innerHTML = "";
 
-            icdInput.value = data.icd_code;
+        if (data.suggestions.length > 0) {
+
+            const bestMatch = data.suggestions[0];
+
+            icdInput.value = bestMatch.icd_code;
 
             matchInfo.textContent =
-                "Matched Symptoms: "
-                + data.matched_symptoms
+                "Suggested Diagnosis: "
+                + bestMatch.diagnosis
+                + " | Matched Symptoms: "
+                + bestMatch.matched_symptoms
                 + " | Match Score: "
-                + data.match_score
+                + bestMatch.match_score
                 + "%";
+
+
+            const heading = document.createElement("h6");
+
+            heading.textContent =
+                "Possible ICD Suggestions";
+
+            suggestionsList.appendChild(heading);
+
+
+            data.suggestions.forEach(function(suggestion, index) {
+
+                const card = document.createElement("div");
+
+                card.className = "card mb-2";
+
+
+                const cardBody = document.createElement("div");
+
+                cardBody.className = "card-body";
+
+
+                const radio = document.createElement("input");
+
+                radio.type = "radio";
+                radio.name = "icd_suggestion";
+                radio.className = "form-check-input me-2";
+                radio.value = suggestion.icd_code;
+
+                if (index === 0) {
+                    radio.checked = true;
+                }
+
+
+                radio.addEventListener("change", function() {
+
+                    diagnosisInput.value =
+                        suggestion.diagnosis;
+
+                    icdInput.value =
+                        suggestion.icd_code;
+
+                    matchInfo.textContent =
+                        "Selected Diagnosis: "
+                        + suggestion.diagnosis
+                        + " | Matched Symptoms: "
+                        + suggestion.matched_symptoms
+                        + " | Match Score: "
+                        + suggestion.match_score
+                        + "%";
+
+                });
+
+
+                const label = document.createElement("label");
+
+                label.style.cursor = "pointer";
+
+                label.innerHTML =
+                    "<strong>Diagnosis:</strong> "
+                    + suggestion.diagnosis
+                    + "<br>"
+                    + "<strong>ICD Code:</strong> "
+                    + suggestion.icd_code
+                    + "<br>"
+                    + "<strong>Matched Symptoms:</strong> "
+                    + suggestion.matched_symptoms
+                    + "<br>"
+                    + "<strong>Match Score:</strong> "
+                    + suggestion.match_score
+                    + "%";
+
+
+                label.prepend(radio);
+
+                cardBody.appendChild(label);
+
+                card.appendChild(cardBody);
+
+                suggestionsList.appendChild(card);
+
+            });
 
         }
 
@@ -165,7 +259,6 @@ diagnosisInput.addEventListener("input", getICDCode);
 symptomsInput.addEventListener("input", getICDCode);
 
 </script>
-
 
 </body>
 

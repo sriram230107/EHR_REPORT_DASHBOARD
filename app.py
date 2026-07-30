@@ -357,15 +357,13 @@ def get_icd_code():
                 standard
             )
 
-    icd_data = icd_codes.get(diagnosis_lower)
+    suggestions = []
 
-    matched_symptoms = 0
-    match_score = 0
-    icd_code = None
-
-    if icd_data:
+    for diagnosis_name, icd_data in icd_codes.items():
 
         symptom_list = icd_data["symptoms"]
+
+        matched_symptoms = 0
 
         for symptom in symptom_list:
 
@@ -374,18 +372,32 @@ def get_icd_code():
 
         total_symptoms = len(symptom_list)
 
-        if matched_symptoms > 0:
-
-            icd_code = icd_data["code"]
+        if total_symptoms > 0:
 
             match_score = (
                 matched_symptoms / total_symptoms
             ) * 100
 
+        else:
+
+            match_score = 0
+
+        if matched_symptoms > 0:
+
+            suggestions.append({
+                "diagnosis": diagnosis_name,
+                "icd_code": icd_data["code"],
+                "matched_symptoms": matched_symptoms,
+                "match_score": round(match_score, 1)
+            })
+
+    suggestions.sort(
+        key=lambda x: x["match_score"],
+        reverse=True
+    )
+
     return {
-        "icd_code": icd_code,
-        "matched_symptoms": matched_symptoms,
-        "match_score": round(match_score, 1)
+        "suggestions": suggestions
     }
 
 @app.route("/patient_profile/<int:patient_id>")
