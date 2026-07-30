@@ -7,6 +7,32 @@ from flask import session
 from flask import flash
 import sqlite3 as sq
 
+icd_codes = {
+    "fever": {
+        "symptoms": ["high temperature", "chills", "body pain"],
+        "code": "R50.9"
+    },
+
+    "common cold": {
+        "symptoms": ["runny nose", "sneezing", "sore throat"],
+        "code": "J00"
+    },
+
+    "headache": {
+        "symptoms": ["head pain", "pain in head"],
+        "code": "R51.9"
+    },
+
+    "cough": {
+        "symptoms": ["cough", "throat irritation"],
+        "code": "R05.9"
+    },
+
+    "flu": {
+        "symptoms": ["fever", "chills", "body pain"],
+        "code": "J11.1"
+    }
+}
 
 app=Flask(__name__)
 app.secret_key="abc123"
@@ -256,13 +282,15 @@ def add_record(patient_id):
         diagnosis = request.form["diagnosis"]
         prescription = request.form["prescription"]
         notes = request.form["notes"]
+        diagnosis_lower = diagnosis.lower()
+       # icd_code = icd_codes.get(diagnosis_lower)
 
 
         cursor.execute(
             """
             INSERT INTO medical_records
-            (patient_id, doctor_name, symptoms, diagnosis, prescription, notes)
-            VALUES (?, ?, ?, ?, ?, ?)
+            (patient_id, doctor_name, symptoms, diagnosis, prescription, notes,icd_code)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 patient_id,
@@ -270,7 +298,8 @@ def add_record(patient_id):
                 symptoms,
                 diagnosis,
                 prescription,
-                notes
+                notes,
+                icd_code
             )
         )
 
@@ -295,6 +324,43 @@ def add_record(patient_id):
         "add_record.html",
         patient_id=patient_id
     )
+
+@app.route("/get_icd_code")
+def get_icd_code():
+
+    diagnosis = request.args.get("diagnosis")
+    symptoms = request.args.get("symptoms")
+
+    matched_symptoms = 0
+    diagnosis_lower = diagnosis.lower().strip()
+
+    icd_data = icd_codes.get(diagnosis_lower)
+
+    if icd_data:
+
+        symptom_list = icd_data["symptoms"]
+
+        symptoms_lower = symptoms.lower()
+
+
+
+        for symptom in symptom_list:
+
+            if symptom in symptoms_lower:
+                matched_symptoms += 1
+
+        if matched_symptoms > 0:
+            icd_code = icd_data["code"]
+        else:
+            icd_code = None
+
+    else:
+        icd_code = None
+
+    return {
+        "icd_code": icd_code,
+        "matched_symptoms": matched_symptoms  
+    }
 
 if __name__ =="__main__":
     app.run(debug=True)

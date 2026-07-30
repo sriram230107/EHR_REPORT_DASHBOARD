@@ -48,6 +48,27 @@ name="diagnosis"
 class="form-control"
 required>
 
+<div class="mt-3">
+
+    <label>
+        Suggested ICD Code
+    </label>
+
+    <input
+    type="text"
+    name="icd_code"
+    class="form-control"
+    placeholder="ICD code will appear here"
+    readonly>
+
+    <small class="text-muted">
+        This is an ICD code suggestion. Please review it before saving.
+    </small>
+
+    <div id="matchInfo" class="text-muted mt-2"></div>
+
+</div>
+
 
 <label class="mt-3">
 Prescription
@@ -81,6 +102,51 @@ Save Record
 
 
 </div>
+
+<script>
+
+const diagnosisInput = document.querySelector('input[name="diagnosis"]');
+const symptomsInput = document.querySelector('textarea[name="symptoms"]');
+const icdInput = document.querySelector('input[name="icd_code"]');
+
+
+diagnosisInput.addEventListener("input", function() {
+
+    const diagnosis = diagnosisInput.value.trim();
+
+    if (diagnosis === "") {
+        icdInput.value = "";
+        return;
+    }
+
+    fetch(
+    "/get_icd_code?diagnosis=" + encodeURIComponent(diagnosis)
+    + "&symptoms=" + encodeURIComponent(symptomsInput.value.trim())
+)
+        .then(response => response.json())
+        .then(data => {
+
+    if (data.icd_code) {
+
+        icdInput.value = data.icd_code;
+
+        document.getElementById("matchInfo").textContent =
+            "Matched Symptoms: " + data.matched_symptoms;
+
+    } else {
+
+        icdInput.value = "";
+
+        document.getElementById("matchInfo").textContent =
+            "No matching symptoms found.";
+
+    }
+
+});
+
+});
+
+</script>
 
 
 </body>
