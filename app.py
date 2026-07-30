@@ -282,8 +282,14 @@ def add_record(patient_id):
         diagnosis = request.form["diagnosis"]
         prescription = request.form["prescription"]
         notes = request.form["notes"]
-        diagnosis_lower = diagnosis.lower()
-       # icd_code = icd_codes.get(diagnosis_lower)
+        diagnosis_lower = diagnosis.lower().strip()
+
+        icd_data = icd_codes.get(diagnosis_lower)
+
+        if icd_data:
+            icd_code = icd_data["code"]
+        else:
+            icd_code = None
 
 
         cursor.execute(
@@ -328,47 +334,98 @@ def add_record(patient_id):
 @app.route("/get_icd_code")
 def get_icd_code():
 
-    diagnosis = request.args.get("diagnosis")
-    symptoms = request.args.get("symptoms")
+    diagnosis = request.args.get("diagnosis", "")
+    symptoms = request.args.get("symptoms", "")
+
+    diagnosis_lower = diagnosis.lower().strip()
+    symptoms_lower = symptoms.lower().strip()
+
+    symptom_aliases = {
+        "high temp": "high temperature",
+        "body ache": "body pain",
+        "body aches": "body pain",
+        "head pain": "headache",
+        "pain in head": "headache",
+        "throat pain": "sore throat"
+    }
+
+    for alias, standard in symptom_aliases.items():
+
+        if alias in symptoms_lower:
+            symptoms_lower = symptoms_lower.replace(
+                alias,
+                standard
+            )
+
+    icd_data = icd_codes.get(diagnosis_lower)
 
     matched_symptoms = 0
     match_score = 0
-
-    diagnosis_lower = diagnosis.lower().strip()
-
-    icd_data = icd_codes.get(diagnosis_lower)
+    icd_code = None
 
     if icd_data:
 
         symptom_list = icd_data["symptoms"]
-
-        symptoms_lower = symptoms.lower()
 
         for symptom in symptom_list:
 
             if symptom in symptoms_lower:
                 matched_symptoms += 1
 
+        total_symptoms = len(symptom_list)
+
         if matched_symptoms > 0:
 
             icd_code = icd_data["code"]
 
-            total_symptoms = len(symptom_list)
-
-            match_score = (matched_symptoms / total_symptoms) * 100
-
-        else:
-
-            icd_code = None
-
-    else:
-
-        icd_code = None
+            match_score = (
+                matched_symptoms / total_symptoms
+            ) * 100
 
     return {
         "icd_code": icd_code,
         "matched_symptoms": matched_symptoms,
         "match_score": round(match_score, 1)
     }
+
+@app.route("/patient_profile/<int:patient_id>")
+def patient_profile(patient_id):
+
+    conn = sq.connect("ehr.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT * FROM patients
+        WHERE patient_id=?
+        """,
+        (patient_id,)
+    )
+
+    patient = cursor.fetchone()
+
+    if patient is None:
+        conn.close()
+        return "Patient not found"
+
+    cursor.execute(
+        """
+        SELECT * FROM medical_records
+        WHERE patient_id=?
+        ORDER BY date DESC
+        """,
+        (patient_id,)
+    )
+
+    records = cursor.fetchall()
+
+    conn.close()
+
+    return render_template(
+        "patient_profile.html",
+        patient=patient,
+        records=records
+    )
+
 if __name__ =="__main__":
     app.run(debug=True)

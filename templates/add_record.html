@@ -108,44 +108,61 @@ Save Record
 const diagnosisInput = document.querySelector('input[name="diagnosis"]');
 const symptomsInput = document.querySelector('textarea[name="symptoms"]');
 const icdInput = document.querySelector('input[name="icd_code"]');
+const matchInfo = document.getElementById("matchInfo");
 
 
-diagnosisInput.addEventListener("input", function() {
+function getICDCode() {
 
     const diagnosis = diagnosisInput.value.trim();
+    const symptoms = symptomsInput.value.trim();
 
     if (diagnosis === "") {
         icdInput.value = "";
+        matchInfo.textContent = "";
         return;
     }
 
     fetch(
-    "/get_icd_code?diagnosis=" + encodeURIComponent(diagnosis)
-    + "&symptoms=" + encodeURIComponent(symptomsInput.value.trim())
-)
-        .then(response => response.json())
-        .then(data => {
+        "/get_icd_code?diagnosis="
+        + encodeURIComponent(diagnosis)
+        + "&symptoms="
+        + encodeURIComponent(symptoms)
+    )
 
-    if (data.icd_code) {
+    .then(response => response.json())
 
-        icdInput.value = data.icd_code;
+    .then(data => {
 
-        document.getElementById("matchInfo").textContent =
-    "Matched Symptoms: " + data.matched_symptoms
-    + " | Match Score: " + data.match_score + "%";
+        if (data.icd_code) {
 
-    } else {
+            icdInput.value = data.icd_code;
 
-        icdInput.value = "";
+            matchInfo.textContent =
+                "Matched Symptoms: "
+                + data.matched_symptoms
+                + " | Match Score: "
+                + data.match_score
+                + "%";
 
-        document.getElementById("matchInfo").textContent =
-            "No matching symptoms found.";
+        }
 
-    }
+        else {
 
-});
+            icdInput.value = "";
 
-});
+            matchInfo.textContent =
+                "No matching symptoms found.";
+
+        }
+
+    });
+
+}
+
+
+diagnosisInput.addEventListener("input", getICDCode);
+
+symptomsInput.addEventListener("input", getICDCode);
 
 </script>
 
